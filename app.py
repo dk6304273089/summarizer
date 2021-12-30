@@ -1,8 +1,9 @@
 import streamlit as st
 from googletrans import Translator
 from transformers import PegasusTokenizer,PegasusForConditionalGeneration
+from deep_translator import GoogleTranslator
 import torch
-
+import pandas as pd
 LANGUAGES = {
     'afrikaans':'af','albanian':'sq','amharic': 'am','arabic':'ar' ,'armenian':'hy','azerbaijani':'az','basque':'eu','belarusian':'be','bengali':'bn',
     'bosnian':'bs','bulgarian':'bg','catalan':'ca','cebuano':'ceb','chichewa':'ny','chinese (simplified)':'zh-cn','chinese (traditional)':'zh-tw','corsican':'co','croatian':'hr',
@@ -17,8 +18,6 @@ LANGUAGES = {
     'sinhala':'si','slovak':'sk','slovenian':'sl','somali':'so','spanish':'es','sundanese':'su','swahili':'sw', 'swedish':'sv','tajik':'tg',
     'tamil':'ta','telugu':'te','thai':'th','turkish':'tr','ukrainian':'uk','urdu':'ur','uyghur':'ug','uzbek':'uz','vietnamese':'vi','welsh':'cy',
     'xhosa':'xh','yiddish':'yi','yoruba':'yo','zulu':'zu'}
-
-translator=Translator()
 h=st.sidebar.selectbox("Select Activity",["Translator and Summarizer","Pegasus Tokenizer"])
 try:
     if h=="Translator and Summarizer" :
@@ -39,38 +38,38 @@ try:
         if input6:
             if len(input5)>100:
                 if input3=="Yes" and input4=="No" and input1=="auto":
-                    out = translator.translate(input5, dest="en")
-                    text=out.text
-                    print(text)
-                    st.success(text)
+                    translated = GoogleTranslator(source="auto", target="en")
+                    f = translated.translate(input5)
+                    print(f)
+                    st.success(f)
                 elif input3=="Yes" and input4=="Yes" and input1!="auto":
                     language=LANGUAGES[input1]
                     path = "./model/lst.pth"
                     col3, col4 = st.columns(2)
-                    out = translator.translate(input5, src=language,dest="en")
-                    text = out.text
-                    print(text)
+                    translated = GoogleTranslator(source=input1, target="en")
+                    f = translated.translate(input5)
+                    print(f)
                     tokenizer = PegasusTokenizer.from_pretrained("./model/")
                     device = 'cuda' if torch.cuda.is_available() else 'cpu'
                     model = torch.load(path)
-                    batch = tokenizer(text, truncation=True, padding='longest', return_tensors="pt").to(device)
+                    batch = tokenizer(f, truncation=True, padding='longest', return_tensors="pt").to(device)
                     translated = model.generate(**batch)
                     tgt_text = tokenizer.batch_decode(translated, skip_special_tokens=True)
                     col3_expander = col3.expander("Expand Translated Text")
                     with col3_expander:
-                        col3_expander.write(text)
+                        col3_expander.write(f)
                     col4_expander = col4.expander("Expand Summarized Text")
                     with col4_expander:
                         col4_expander.write(tgt_text[0])
                 elif input3=="No" and input4=="Yes" and input1=="auto" or input1!="auto":
                     path = "./model/lst.pth"
-                    out = translator.translate(input5, dest="en")
-                    text = out.text
-                    print(text)
+                    translated = GoogleTranslator(source="auto", target="en")
+                    f = translated.translate(input5)
+                    print(f)
                     tokenizer = PegasusTokenizer.from_pretrained("./model/")
                     device = 'cuda' if torch.cuda.is_available() else 'cpu'
                     model = torch.load(path)
-                    batch = tokenizer(text, truncation=True, padding='longest', return_tensors="pt").to(device)
+                    batch = tokenizer(f, truncation=True, padding='longest', return_tensors="pt").to(device)
                     translated = model.generate(**batch)
                     tgt_text = tokenizer.batch_decode(translated, skip_special_tokens=True)
                     st.success(tgt_text[0])
